@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tuas_decamps_maker/screens/home_screen.dart';
 
 void main() {
   runApp(const MainApp());
@@ -10,7 +11,6 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Decamps Maker",
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -19,11 +19,7 @@ class MainApp extends StatelessWidget {
           ),
         useMaterial3: true,
       ),
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+      home: const HomeScreen(),
     );
   }
 }
