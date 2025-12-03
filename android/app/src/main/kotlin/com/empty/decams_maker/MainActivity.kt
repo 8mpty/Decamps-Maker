@@ -1,4 +1,4 @@
-package com.empty.decamps_maker
+package com.empty.decams_maker
 
 import io.flutter.embedding.android.FlutterActivity
 

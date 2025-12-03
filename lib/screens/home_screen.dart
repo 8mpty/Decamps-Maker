@@ -1,7 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:tuas_decamps_maker/screens/decams_form_screen.dart';
+import 'package:tuas_decamps_maker/services/storage_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,8 +14,20 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = false;
   String? _fileName;
-  PlatformFile? pickedFile;
-  File? fileToDisplay;
+  final StorageService _storageService = StorageService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkForExistingData();
+  }
+
+  Future<void> _checkForExistingData() async {
+    final hasData = await _storageService.hasPersonnelData();
+    if (hasData && mounted) {
+      _navigateToFormScreen();
+    }
+  }
 
   Future<void> _importJson() async {
     try {
@@ -31,37 +44,64 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (result != null && result.files.isNotEmpty) {
         _fileName = result.files.first.name;
-        pickedFile = result.files.first;
-        fileToDisplay = File(pickedFile!.path!);
-
-        print('File picked: $_fileName');
-
-        final bytes = pickedFile!.bytes;
+        
+        final bytes = result.files.first.bytes;
         if (bytes != null) {
           String fileContents = utf8.decode(bytes);
           var jsonData = jsonDecode(fileContents);
-
-          print('JSON Data: $jsonData');
-        } else {
-          print('File data is null');
+          
+          await _storageService.savePersonnelData(jsonData);
+          
+          if (mounted) {
+            _navigateToFormScreen();
+          }
         }
-      } else {
-        print('No file selected or file picker was canceled');
       }
     } catch (e) {
       print('Error during file picking: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error importing file: $e')),
+        );
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  void _navigateToFormScreen() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const DecamsFormScreen(),
+      ),
+    );
+  }
+
+  Future<void> _resetApp() async {
+    await _storageService.clearAllData();
+    setState(() {
+      _fileName = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Decamps Maker"),
+        title: const Text("DECAMS Maker"),
+        actions: [
+          if (_fileName != null)
+            IconButton(
+              icon: const Icon(Icons.restart_alt),
+              onPressed: _resetApp,
+              tooltip: 'Reset App',
+            ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -126,7 +166,18 @@ class _HomeScreenState extends State<HomeScreen> {
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 12),
+            Text(
+              'Personnel data loaded successfully!',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 32),
             FilledButton.icon(
+              onPressed: _navigateToFormScreen,
+              icon: const Icon(Icons.arrow_forward),
+              label: const Text('Continue to Form'),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
               onPressed: _importJson,
               icon: const Icon(Icons.file_upload),
               label: const Text('Import Another File'),
