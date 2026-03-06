@@ -23,7 +23,7 @@ class AppConstants {
   'Rescue - TRAPPED DOOR', 
   'Rescue - SUICIDE', 
   'MOTOR VEHICLE ACCIDENT', 
-  'Medical - CARDIAC ARREST P1+'
+  'Medical - CARDIAC ARREST P1+',
   'ENVIRONMENTAL OIL SPILLAGE',
-  'CBRE - CHEMICAL AGENT'];
+  'CBRE - CHEMICAL AGENT',];
 }
