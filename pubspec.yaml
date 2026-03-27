@@ -1,5 +1,5 @@
 name: tuas_decamps_maker
-description: "A flutter project."
+description: "A flutter project for generating Fire - DECAMS messages."
 publish_to: 'none'
 version: 0.1.0
 
@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  file_picker: ^10.3.7
+  shared_preferences: ^2.5.3
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
