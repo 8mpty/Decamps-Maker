@@ -27,6 +27,7 @@ class AppConstants {
     'Fire - INVESTIGATION', 
     'Fire - MOTOR VECHILES',
     'Fire - TUNNEL',
+    'Fire - VEGETATION',
     'Rescue - RTA',
     'Rescue - GAS LEAK', 
     'Rescue -  INDUSTRIAL/DOMESTIC', 
