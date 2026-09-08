@@ -20,6 +20,7 @@ class PersonnelModel {
 }
 
 class PersonnelFile {
+  static const Set<String> _includedCategories = {'CFS', 'Firefighters'};
   final int rota;
   final String organization;
   final Map<String, dynamic> personnelData;
@@ -40,38 +41,38 @@ class PersonnelFile {
 
   List<PersonnelModel> getPersonnelList() {
     final List<PersonnelModel> personnel = [];
-    
-    if (personnelData['CFS'] != null) {
-      final cfsData = personnelData['CFS'] as Map<String, dynamic>;
-      cfsData.forEach((rankAbbreviation, data) {
-        final personnelData = data as Map<String, dynamic>;
-        personnel.add(PersonnelModel(
-          name: personnelData['name'] as String,
-          fullRank: personnelData['full_rank'] as String,
-          hp: personnelData['hp'] as String?,
+    personnelData.forEach((category, categoryData) {
+      if (!_includedCategories.contains(category)) return;
+      if (categoryData is! Map<String, dynamic>) return;
+      categoryData.forEach((rankAbbreviation, data) {
+        personnel.addAll(_parseRankGroup(
+          category: category,
           rankAbbreviation: rankAbbreviation,
-          category: 'CFS',
+          data: data,
         ));
       });
-    }
-    
-    if (personnelData['Firefighters'] != null) {
-      final firefightersData = personnelData['Firefighters'] as Map<String, dynamic>;
-      firefightersData.forEach((rankAbbreviation, data) {
-        final personnelList = data as List<dynamic>;
-        for (var person in personnelList) {
-          final personnelData = person as Map<String, dynamic>;
-          personnel.add(PersonnelModel(
-            name: personnelData['name'] as String,
-            fullRank: personnelData['full_rank'] as String,
-            hp: personnelData['hp'] as String?,
-            rankAbbreviation: rankAbbreviation,
-            category: 'Firefighters',
-          ));
-        }
-      });
-    }
-    
+    });
+
     return personnel;
+  }
+
+  static List<PersonnelModel> _parseRankGroup({
+    required String category,
+    required String rankAbbreviation,
+    required dynamic data,
+  }) {
+    final Iterable<dynamic> persons =
+        data is List<dynamic> ? data : <dynamic>[data];
+
+    return persons.map((person) {
+      final personData = person as Map<String, dynamic>;
+      return PersonnelModel(
+        name: personData['name'] as String,
+        fullRank: personData['full_rank'] as String,
+        hp: personData['hp'] as String?,
+        rankAbbreviation: rankAbbreviation,
+        category: category,
+      );
+    }).toList();
   }
 }
