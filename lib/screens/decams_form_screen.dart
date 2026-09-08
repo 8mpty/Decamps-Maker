@@ -9,6 +9,7 @@ import 'package:tuas_decamps_maker/utils/form_validators.dart';
 import 'package:tuas_decamps_maker/widgets/calculated_results_card.dart';
 import 'package:tuas_decamps_maker/widgets/decams_form_fields.dart';
 import 'package:tuas_decamps_maker/widgets/incident_details_section.dart';
+import 'package:tuas_decamps_maker/widgets/remarks_section.dart';
 import 'package:tuas_decamps_maker/widgets/time_section.dart';
 
 class DecamsFormScreen extends StatefulWidget {
@@ -27,6 +28,7 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
   String? _selectedCaseOf = 'Fire - DECAMS';
   final TextEditingController _callerNameController = TextEditingController();
   final TextEditingController _incNumberController = TextEditingController();
+  final TextEditingController _remarksController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   
   final TextEditingController _assignHourController = TextEditingController();
@@ -91,29 +93,26 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
 
     _calculateTimes();
 
-    final message = '''
-Appliance: ${_selectedAppliance ?? 'N/A'}
+    final messageParts = <String>[
+      'Appliance: ${_selectedAppliance ?? 'N/A'}',
+      'SC: ${_selectedPersonnel?.rankAbbreviation ?? ''} ${_selectedPersonnel?.name ?? ''}',
+      'Location: ${_locationController.text.toUpperCase()}',
+      'Case of: ${_selectedCaseOf ?? 'N/A'}',
+      'Caller name: ${_callerNameController.text.toUpperCase()}',
+      'Assign: ${_assignTime?.formatTime() ?? 'CC'}',
+      'Enroute: ${_enrouteTime?.formatTime() ?? 'CC'}',
+      'Arrive: ${_arriveTime?.formatTime() ?? 'CC'}',
+      'Activation: $_activationResult',
+      'Response: $_responseResult',
+      'Inc no.: /${_selectedDate.year}${_selectedDate.month.toString().padLeft(2, '0')}${_selectedDate.day.toString().padLeft(2, '0')}/${_incNumberController.text}',
+    ];
 
-SC: ${_selectedPersonnel?.rankAbbreviation ?? ''} ${_selectedPersonnel?.name ?? ''}
+    final remarksText = _remarksController.text.trim();
+    if (remarksText.isNotEmpty) {
+      messageParts.add('Remarks:\n$remarksText');
+    }
 
-Location: ${_locationController.text.toUpperCase()}
-
-Case of: ${_selectedCaseOf ?? 'N/A'}
-
-Caller name: ${_callerNameController.text.toUpperCase()}
-
-Assign: ${_assignTime?.formatTime() ?? 'CC'}
-
-Enroute: ${_enrouteTime?.formatTime() ?? 'CC'}
-
-Arrive: ${_arriveTime?.formatTime() ?? 'CC'}
-
-Activation: $_activationResult
-
-Response: $_responseResult
-
-Inc no.: /${_selectedDate.year}${_selectedDate.month.toString().padLeft(2, '0')}${_selectedDate.day.toString().padLeft(2, '0')}/${_incNumberController.text}
-''';
+    final message = messageParts.join('\n\n');
 
     showDialog(
       context: context,
@@ -164,6 +163,7 @@ Inc no.: /${_selectedDate.year}${_selectedDate.month.toString().padLeft(2, '0')}
       _selectedCaseOf = 'Fire - DECAMS';
       _callerNameController.clear();
       _incNumberController.clear();
+      _remarksController.clear();
       _selectedDate = DateTime.now();
       
       _assignHourController.clear();
@@ -292,8 +292,8 @@ Inc no.: /${_selectedDate.year}${_selectedDate.month.toString().padLeft(2, '0')}
                   });
                 },
               ),
+              
               const SizedBox(height: 20),
-
               TimeSection(
                 title: 'Enroute Time',
                 hourController: _enrouteHourController,
@@ -306,8 +306,8 @@ Inc no.: /${_selectedDate.year}${_selectedDate.month.toString().padLeft(2, '0')}
                   });
                 },
               ),
-              const SizedBox(height: 20),
 
+              const SizedBox(height: 20),
               TimeSection(
                 title: 'Arrive Time',
                 hourController: _arriveHourController,
@@ -320,22 +320,25 @@ Inc no.: /${_selectedDate.year}${_selectedDate.month.toString().padLeft(2, '0')}
                   });
                 },
               ),
-              const SizedBox(height: 24),
 
+              const SizedBox(height: 24),
               CalculatedResultsCard(
                 activationResult: _activationResult,
                 responseResult: _responseResult,
               ),
-              const SizedBox(height: 24),
 
+              const SizedBox(height: 24),
               IncidentDetailsSection(
                 selectedDate: _selectedDate,
                 onDateSelected: _selectDate,
                 incNumberController: _incNumberController,
                 validator: FormValidators.validateIncidentNumber,
               ),
-              const SizedBox(height: 32),
 
+              const SizedBox(height: 24),
+              RemarksSection(remarksController: _remarksController),
+              
+              const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
@@ -368,6 +371,7 @@ Inc no.: /${_selectedDate.year}${_selectedDate.month.toString().padLeft(2, '0')}
     _locationController.dispose();
     _callerNameController.dispose();
     _incNumberController.dispose();
+    _remarksController.dispose();
     super.dispose();
   }
 }
