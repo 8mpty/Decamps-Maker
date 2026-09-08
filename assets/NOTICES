@@ -1559,6 +1559,8 @@ limitations under the License.
 --------------------------------------------------------------------------------
 cross_file
 flutter_plugin_android_lifecycle
+path_provider_linux
+path_provider_platform_interface
 shared_preferences
 shared_preferences_android
 shared_preferences_foundation
@@ -5463,8 +5465,6 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 flutter_lints
-path_provider_linux
-path_provider_platform_interface
 path_provider_windows
 plugin_platform_interface
 shared_preferences_linux
@@ -31270,7 +31270,7 @@ xml
 
 The MIT License
 
-Copyright (c) 2006-2025 Lukas Renggli.
+Copyright (c) 2006-2026 Lukas Renggli.
 All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
