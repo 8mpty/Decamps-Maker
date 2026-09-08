@@ -59,7 +59,7 @@ class IncidentDetailsSection extends StatelessWidget {
                     decoration: InputDecoration(
                       labelText: 'Incident Number',
                       border: const OutlineInputBorder(),
-                      hintText: '0849',
+                      hintText: '',
                       errorStyle: const TextStyle(
                         fontSize: 12,
                         height: 0.8,

@@ -14,7 +14,6 @@ class DecamsFormFields extends StatelessWidget {
   final ValueChanged<String?> onCaseOfChanged;
   final TextEditingController callerNameController;
   
-
   const DecamsFormFields({
     super.key,
     required this.selectedAppliance,
@@ -33,7 +32,7 @@ class DecamsFormFields extends StatelessWidget {
     return Column(
       children: [
         DropdownButtonFormField<String>(
-          value: selectedAppliance,
+          initialValue: selectedAppliance,
           decoration: const InputDecoration(
             labelText: 'Appliance *',
             border: OutlineInputBorder(),
@@ -49,7 +48,7 @@ class DecamsFormFields extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<PersonnelModel>(
-          value: selectedPersonnel,
+          initialValue: selectedPersonnel,
           decoration: const InputDecoration(
             labelText: 'SC Personnel *',
             border: OutlineInputBorder(),
@@ -77,7 +76,7 @@ class DecamsFormFields extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
-          value: selectedCaseOf,
+          initialValue: selectedCaseOf,
           decoration: const InputDecoration(
             labelText: 'Case Of *',
             border: OutlineInputBorder(),
