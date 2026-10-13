@@ -13,7 +13,7 @@ class DecamsFormFields extends StatelessWidget {
   final String? selectedCaseOf;
   final ValueChanged<String?> onCaseOfChanged;
   final TextEditingController callerNameController;
-  
+
   const DecamsFormFields({
     super.key,
     required this.selectedAppliance,
@@ -37,11 +37,8 @@ class DecamsFormFields extends StatelessWidget {
             labelText: 'Appliance *',
             border: OutlineInputBorder(),
           ),
-          items:  AppConstants.applianceOptions.map((appliance) {
-            return DropdownMenuItem(
-              value: appliance,
-              child: Text(appliance),
-            );
+          items: AppConstants.applianceOptions.map((appliance) {
+            return DropdownMenuItem(value: appliance, child: Text(appliance));
           }).toList(),
           onChanged: onApplianceChanged,
           validator: FormValidators.createRequiredValidator('Appliance'),
@@ -53,16 +50,11 @@ class DecamsFormFields extends StatelessWidget {
             labelText: 'SC Personnel *',
             border: OutlineInputBorder(),
           ),
-          items: personnelList.map((personnel) {
-            return DropdownMenuItem(
-              value: personnel,
-              child: Text(personnel.toString()),
-            );
-          }).toList(),
+          items: _buildPersonnelItems(context),
           onChanged: onPersonnelChanged,
           validator: (value) => FormValidators.validateRequired(
-            value?.toString(), 
-            'SC Personnel'
+            value?.toString(),
+            'SC Personnel',
           ),
         ),
         const SizedBox(height: 16),
@@ -82,10 +74,7 @@ class DecamsFormFields extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           items: AppConstants.caseOptions.map((caseType) {
-            return DropdownMenuItem(
-              value: caseType,
-              child: Text(caseType),
-            );
+            return DropdownMenuItem(value: caseType, child: Text(caseType));
           }).toList(),
           onChanged: onCaseOfChanged,
           validator: FormValidators.createRequiredValidator('Case Of'),
@@ -103,4 +92,39 @@ class DecamsFormFields extends StatelessWidget {
       ],
     );
   }
+
+  // Custom method to build the personnel dropdown items with section headers
+  List<DropdownMenuItem<PersonnelModel>> _buildPersonnelItems(
+    BuildContext context,
+  ) {
+    final theme = Theme.of(context);
+    final headerStyle = theme.textTheme.labelLarge?.copyWith(
+      color: theme.colorScheme.primary,
+      fontWeight: FontWeight.bold,
+    );
+
+    final items = <DropdownMenuItem<PersonnelModel>>[];
+    String? currentCategory;
+    for (final personnel in personnelList) {
+      if (personnel.category != currentCategory) {
+        currentCategory = personnel.category;
+        items.add(
+          DropdownMenuItem<PersonnelModel>(
+            enabled: false,
+            value: _PersonnelSectionHeader(currentCategory),
+            child: Text(currentCategory, style: headerStyle),
+          ),
+        );
+      }
+      items.add(
+        DropdownMenuItem(value: personnel, child: Text(personnel.toString())),
+      );
+    }
+    return items;
+  }
+}
+
+class _PersonnelSectionHeader extends PersonnelModel {
+  _PersonnelSectionHeader(String category)
+    : super(name: '', fullRank: '', rankAbbreviation: '', category: category);
 }
