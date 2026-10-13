@@ -94,10 +94,10 @@ class DecamsFormFields extends StatelessWidget {
         TextFormField(
           controller: callerNameController,
           decoration: const InputDecoration(
-            labelText: 'Caller Name *',
+            labelText: 'Caller Name',
             border: OutlineInputBorder(),
           ),
-          validator: FormValidators.createRequiredValidator('Caller Name'),
+          // validator: FormValidators.createRequiredValidator('Caller Name'),
         ),
         const SizedBox(height: 24),
       ],

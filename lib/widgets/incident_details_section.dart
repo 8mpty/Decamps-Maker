@@ -77,10 +77,6 @@ class IncidentDetailsSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        Text(
-          'Incident No. will be: /${selectedDate.year}${selectedDate.month.toString().padLeft(2, '0')}${selectedDate.day.toString().padLeft(2, '0')}/${incNumberController.text}',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
       ],
     );
   }

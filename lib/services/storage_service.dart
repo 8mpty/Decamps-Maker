@@ -4,10 +4,17 @@ import '../models/personnel_model.dart';
 
 class StorageService {
   static const String _personnelKey = 'personnel_data';
+  static const String _selectedRotaKey = 'selected_rota';
   static const String _legacyPersonnelListKey = 'personnel_list';
 
   Future<void> savePersonnelData(Map<String, dynamic> jsonData) async {
-    PersonnelFile.fromJson(jsonData);
+    final personnelFile = PersonnelFile.fromJson(jsonData);
+    if (personnelFile.getPersonnelList().isEmpty) {
+      throw const FormatException(
+        'No personnel found. Expected a "personnel" map containing a '
+        'recognised category such as "CFS", "Firefighters" or "Alpha".',
+      );
+    }
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_personnelKey, jsonEncode(jsonData));
@@ -23,8 +30,14 @@ class StorageService {
     );
   }
 
-  Future<List<PersonnelModel>?> getPersonnelList() async {
-    return (await getPersonnelFile())?.getPersonnelList();
+  Future<String?> getSelectedRota() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_selectedRotaKey);
+  }
+
+  Future<void> saveSelectedRota(String rota) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_selectedRotaKey, rota);
   }
 
   Future<bool> hasPersonnelData() async {
@@ -38,6 +51,7 @@ class StorageService {
   Future<void> clearAllData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_personnelKey);
+    await prefs.remove(_selectedRotaKey);
     await prefs.remove(_legacyPersonnelListKey);
   }
 }
