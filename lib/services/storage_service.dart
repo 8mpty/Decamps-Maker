@@ -4,49 +4,54 @@ import '../models/personnel_model.dart';
 
 class StorageService {
   static const String _personnelKey = 'personnel_data';
-  static const String _personnelListKey = 'personnel_list';
+  static const String _selectedRotaKey = 'selected_rota';
+  static const String _legacyPersonnelListKey = 'personnel_list';
 
   Future<void> savePersonnelData(Map<String, dynamic> jsonData) async {
+    final personnelFile = PersonnelFile.fromJson(jsonData);
+    if (personnelFile.getPersonnelList().isEmpty) {
+      throw const FormatException(
+        'No personnel found. Expected a "personnel" map containing a '
+        'recognised category such as "CFS", "Firefighters" or "Alpha".',
+      );
+    }
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_personnelKey, jsonEncode(jsonData));
-    
-    final personnelFile = PersonnelFile.fromJson(jsonData);
-    final personnelList = personnelFile.getPersonnelList();
-    final listJson = personnelList.map((person) => {
-      'name': person.name,
-      'fullRank': person.fullRank,
-      'hp': person.hp,
-      'rankAbbreviation': person.rankAbbreviation,
-      'category': person.category,
-    }).toList();
-    
-    await prefs.setString(_personnelListKey, jsonEncode(listJson));
+    await prefs.remove(_legacyPersonnelListKey);
   }
 
-  Future<List<PersonnelModel>?> getPersonnelList() async {
+  Future<PersonnelFile?> getPersonnelFile() async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_personnelListKey);
-    
+    final jsonString = prefs.getString(_personnelKey);
     if (jsonString == null) return null;
-    
-    final List<dynamic> jsonList = jsonDecode(jsonString);
-    return jsonList.map((item) => PersonnelModel(
-      name: item['name'] as String,
-      fullRank: item['fullRank'] as String,
-      hp: item['hp'] as String?,
-      rankAbbreviation: item['rankAbbreviation'] as String,
-      category: item['category'] as String,
-    )).toList();
+    return PersonnelFile.fromJson(
+      jsonDecode(jsonString) as Map<String, dynamic>,
+    );
+  }
+
+  Future<String?> getSelectedRota() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_selectedRotaKey);
+  }
+
+  Future<void> saveSelectedRota(String rota) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_selectedRotaKey, rota);
   }
 
   Future<bool> hasPersonnelData() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.containsKey(_personnelListKey);
+    try {
+      return await getPersonnelFile() != null;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> clearAllData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_personnelKey);
-    await prefs.remove(_personnelListKey);
+    await prefs.remove(_selectedRotaKey);
+    await prefs.remove(_legacyPersonnelListKey);
   }
 }

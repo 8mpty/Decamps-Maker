@@ -12,6 +12,21 @@ import 'package:tuas_decamps_maker/widgets/incident_details_section.dart';
 import 'package:tuas_decamps_maker/widgets/remarks_section.dart';
 import 'package:tuas_decamps_maker/widgets/time_section.dart';
 
+const _monthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
 class DecamsFormScreen extends StatefulWidget {
   const DecamsFormScreen({super.key});
 
@@ -21,38 +36,44 @@ class DecamsFormScreen extends StatefulWidget {
 
 class _DecamsFormScreenState extends State<DecamsFormScreen> {
   final StorageService _storageService = StorageService();
-  
+
   String? _selectedAppliance;
   PersonnelModel? _selectedPersonnel;
-  final TextEditingController _locationController = TextEditingController();
   String? _selectedCaseOf = 'Fire - DECAMS';
+  DateTime _selectedDate = DateTime.now();
+
+  final TextEditingController _locationController = TextEditingController();
   final TextEditingController _callerNameController = TextEditingController();
   final TextEditingController _incNumberController = TextEditingController();
   final TextEditingController _remarksController = TextEditingController();
-  DateTime _selectedDate = DateTime.now();
-  
+
   final TextEditingController _assignHourController = TextEditingController();
   final TextEditingController _assignMinuteController = TextEditingController();
   final TextEditingController _assignSecondController = TextEditingController();
-  
+
   final TextEditingController _enrouteHourController = TextEditingController();
-  final TextEditingController _enrouteMinuteController = TextEditingController();
-  final TextEditingController _enrouteSecondController = TextEditingController();
-  
+  final TextEditingController _enrouteMinuteController =
+      TextEditingController();
+  final TextEditingController _enrouteSecondController =
+      TextEditingController();
+
   final TextEditingController _arriveHourController = TextEditingController();
   final TextEditingController _arriveMinuteController = TextEditingController();
   final TextEditingController _arriveSecondController = TextEditingController();
-  
+
   TimeData? _assignTime;
   TimeData? _enrouteTime;
   TimeData? _arriveTime;
-  
+
   String _activationResult = 'CC';
   String _responseResult = 'CC';
-  
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  
+
   List<PersonnelModel> _personnelList = [];
+  PersonnelFile? _personnelFile;
+  List<String> _rotaOptions = [];
+  String? _selectedRota;
 
   @override
   void initState() {
@@ -61,28 +82,79 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
   }
 
   Future<void> _loadPersonnelData() async {
-    final personnel = await _storageService.getPersonnelList();
-    if (personnel != null) {
-      setState(() {
-        _personnelList = personnel;
-      });
+    final file = await _storageService.getPersonnelFile();
+    if (file == null) return;
+
+    final rotas = file.getRotas();
+    final saved = await _storageService.getSelectedRota();
+    final selected = rotas.contains(saved)
+        ? saved
+        : (rotas.isNotEmpty ? rotas.first : null);
+    if (selected != null && selected != saved) {
+      await _storageService.saveSelectedRota(selected);
     }
+
+    if (!mounted) return;
+    setState(() {
+      _personnelFile = file;
+      _rotaOptions = rotas;
+      _selectedRota = selected;
+      _personnelList = file.getPersonnelList(rota: selected);
+    });
+  }
+
+  Future<void> _onRotaChanged(String? rota) async {
+    final file = _personnelFile;
+    if (rota == null || file == null) return;
+
+    final visible = file.getPersonnelList(rota: rota);
+    final selected = _selectedPersonnel;
+
+    setState(() {
+      _selectedRota = rota;
+      _personnelList = visible;
+      _selectedPersonnel = selected == null
+          ? null
+          : _findVisiblePersonnel(visible, selected);
+    });
+
+    await _storageService.saveSelectedRota(rota);
+  }
+
+  static PersonnelModel? _findVisiblePersonnel(
+    List<PersonnelModel> personnel,
+    PersonnelModel selected,
+  ) {
+    for (final person in personnel) {
+      if (person.name == selected.name &&
+          person.rankAbbreviation == selected.rankAbbreviation &&
+          person.category == selected.category) {
+        return person;
+      }
+    }
+    return null;
   }
 
   void _calculateTimes() {
     _activationResult = "CC";
     _responseResult = "CC";
-    
+
     if (_assignTime != null) {
       if (_enrouteTime != null) {
-        _activationResult = CalculateService.calculateActivation(_assignTime, _enrouteTime);
+        _activationResult = CalculateService.calculateActivation(
+          _assignTime,
+          _enrouteTime,
+        );
       }
-      
+
       if (_arriveTime != null) {
-        _responseResult = CalculateService.calculateResponse(_assignTime, _arriveTime);
+        _responseResult = CalculateService.calculateResponse(
+          _assignTime,
+          _arriveTime,
+        );
       }
     }
-    
+
     setState(() {});
   }
 
@@ -94,6 +166,7 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
     _calculateTimes();
 
     final messageParts = <String>[
+      '*${_selectedDate.day} ${_monthNames[_selectedDate.month - 1]} ${_selectedDate.year}*',
       'Appliance: ${_selectedAppliance ?? 'N/A'}',
       'SC: ${_selectedPersonnel?.rankAbbreviation ?? ''} ${_selectedPersonnel?.name ?? ''}',
       'Location: ${_locationController.text.toUpperCase()}',
@@ -104,7 +177,7 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
       'Arrive: ${_arriveTime?.formatTime() ?? 'CC'}',
       'Activation: $_activationResult',
       'Response: $_responseResult',
-      'Inc no.: /${_selectedDate.year}${_selectedDate.month.toString().padLeft(2, '0')}${_selectedDate.day.toString().padLeft(2, '0')}/${_incNumberController.text}',
+      'Inc no.: ${_incNumberController.text}',
     ];
 
     final remarksText = _remarksController.text.trim();
@@ -126,10 +199,7 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
-                child: SelectableText(
-                  message,
-                  style: const TextStyle(),
-                ),
+                child: SelectableText(message, style: const TextStyle()),
               ),
             ],
           ),
@@ -165,7 +235,7 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
       _incNumberController.clear();
       _remarksController.clear();
       _selectedDate = DateTime.now();
-      
+
       _assignHourController.clear();
       _assignMinuteController.clear();
       _assignSecondController.clear();
@@ -175,11 +245,11 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
       _arriveHourController.clear();
       _arriveMinuteController.clear();
       _arriveSecondController.clear();
-      
+
       _assignTime = null;
       _enrouteTime = null;
       _arriveTime = null;
-      
+
       _activationResult = 'CC';
       _responseResult = 'CC';
     });
@@ -190,7 +260,9 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Reset App'),
-        content: const Text('This will clear all personnel data and reset the app to initial state. Are you sure?'),
+        content: const Text(
+          'This will clear all personnel data and reset the app to initial state. Are you sure?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -203,15 +275,13 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
         ],
       ),
     );
-    
+
     if (confirmed == true) {
       await _storageService.clearAllData();
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       }
     }
@@ -233,10 +303,48 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('DECAMS Form'),
         actions: [
+          if (_rotaOptions.isNotEmpty)
+            PopupMenuButton<String>(
+              tooltip: 'Switch rota',
+              initialValue: _selectedRota,
+              position: PopupMenuPosition.under,
+              onSelected: _onRotaChanged,
+              itemBuilder: (context) => _rotaOptions
+                  .map((rota) => PopupMenuItem(value: rota, child: Text(rota)))
+                  .toList(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _selectedRota ?? 'Rota',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_drop_down,
+                      size: 20,
+                      color: colorScheme.onSecondaryContainer,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.clear_all),
             onPressed: _clearForm,
@@ -292,7 +400,7 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
                   });
                 },
               ),
-              
+
               const SizedBox(height: 20),
               TimeSection(
                 title: 'Enroute Time',
@@ -337,8 +445,8 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
 
               const SizedBox(height: 24),
               RemarksSection(remarksController: _remarksController),
-              
-              const SizedBox(height: 32),
+
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
