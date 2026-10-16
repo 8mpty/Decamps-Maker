@@ -6,6 +6,7 @@ import 'package:tuas_decamps_maker/screens/home_screen.dart';
 import 'package:tuas_decamps_maker/services/calculate_service.dart';
 import 'package:tuas_decamps_maker/services/storage_service.dart';
 import 'package:tuas_decamps_maker/utils/form_validators.dart';
+import 'package:tuas_decamps_maker/utils/incident_number.dart';
 import 'package:tuas_decamps_maker/widgets/calculated_results_card.dart';
 import 'package:tuas_decamps_maker/widgets/decams_form_fields.dart';
 import 'package:tuas_decamps_maker/widgets/incident_details_section.dart';
@@ -13,18 +14,18 @@ import 'package:tuas_decamps_maker/widgets/remarks_section.dart';
 import 'package:tuas_decamps_maker/widgets/time_section.dart';
 
 const _monthNames = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
+  'JANUARY',
+  'FEBRUARY',
+  'MARCH',
+  'APRIL',
+  'MAY',
+  'JUNE',
+  'JULY',
+  'AUGUST',
+  'SEPTEMBER',
+  'OCTOBER',
+  'NOVEMBER',
+  'DECEMBER',
 ];
 
 class DecamsFormScreen extends StatefulWidget {
@@ -52,10 +53,8 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
   final TextEditingController _assignSecondController = TextEditingController();
 
   final TextEditingController _enrouteHourController = TextEditingController();
-  final TextEditingController _enrouteMinuteController =
-      TextEditingController();
-  final TextEditingController _enrouteSecondController =
-      TextEditingController();
+  final TextEditingController _enrouteMinuteController = TextEditingController();
+  final TextEditingController _enrouteSecondController = TextEditingController();
 
   final TextEditingController _arriveHourController = TextEditingController();
   final TextEditingController _arriveMinuteController = TextEditingController();
@@ -75,10 +74,47 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
   List<String> _rotaOptions = [];
   String? _selectedRota;
 
+  bool _hideIncDateFormat = false;
+  bool _hideSc = false;
+
   @override
   void initState() {
     super.initState();
     _loadPersonnelData();
+    _loadHideIncDateFormat();
+    _loadHideSc();
+  }
+
+  Future<void> _loadHideIncDateFormat() async {
+    final hide = await _storageService.getHideDateFormat();
+    if (!mounted || hide == _hideIncDateFormat) return;
+
+    setState(() {
+      _hideIncDateFormat = hide;
+    });
+  }
+
+  Future<void> _onHideIncDateFormatChanged(bool hide) async {
+    setState(() {
+      _hideIncDateFormat = hide;
+    });
+    await _storageService.saveHideDateFormat(hide);
+  }
+
+  Future<void> _loadHideSc() async {
+    final hideSc = await _storageService.getHideSc();
+    if (!mounted || hideSc == _hideSc) return;
+
+    setState(() {
+      _hideSc = hideSc;
+    });
+  }
+
+  Future<void> _onHideScChanged(bool hideSc) async {
+    setState(() {
+      _hideSc = hideSc;
+    });
+    await _storageService.saveHideSc(hideSc);
   }
 
   Future<void> _loadPersonnelData() async {
@@ -165,10 +201,17 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
 
     _calculateTimes();
 
+    final incNumber = formatIncidentNumber(
+      number: _incNumberController.text,
+      date: _selectedDate,
+      hideDateFormat: _hideIncDateFormat,
+    );
+
     final messageParts = <String>[
-      '*${_selectedDate.day} ${_monthNames[_selectedDate.month - 1]} ${_selectedDate.year}*',
+      '*_${_selectedDate.day} ${_monthNames[_selectedDate.month - 1]} ${_selectedDate.year}_*',
       'Appliance: ${_selectedAppliance ?? 'N/A'}',
-      'SC: ${_selectedPersonnel?.rankAbbreviation ?? ''} ${_selectedPersonnel?.name ?? ''}',
+      if (!_hideSc)
+        'SC: ${_selectedPersonnel?.rankAbbreviation ?? ''} ${_selectedPersonnel?.name ?? ''}',
       'Location: ${_locationController.text.toUpperCase()}',
       'Case of: ${_selectedCaseOf ?? 'N/A'}',
       'Caller name: ${_callerNameController.text.toUpperCase()}',
@@ -177,7 +220,7 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
       'Arrive: ${_arriveTime?.formatTime() ?? 'CC'}',
       'Activation: $_activationResult',
       'Response: $_responseResult',
-      'Inc no.: ${_incNumberController.text}',
+      'Inc no.: $incNumber',
     ];
 
     final remarksText = _remarksController.text.trim();
@@ -441,6 +484,10 @@ class _DecamsFormScreenState extends State<DecamsFormScreen> {
                 onDateSelected: _selectDate,
                 incNumberController: _incNumberController,
                 validator: FormValidators.validateIncidentNumber,
+                hideIncDateFormat: _hideIncDateFormat,
+                onHideIncDateFormatChanged: _onHideIncDateFormatChanged,
+                hideSc: _hideSc,
+                onHideScChanged: _onHideScChanged,
               ),
 
               const SizedBox(height: 24),

@@ -6,6 +6,8 @@ class StorageService {
   static const String _personnelKey = 'personnel_data';
   static const String _selectedRotaKey = 'selected_rota';
   static const String _legacyPersonnelListKey = 'personnel_list';
+  static const String _hideDateFormatKey = 'hide_inc_date_format';
+  static const String _hideScKey = 'hide_sc';
 
   Future<void> savePersonnelData(Map<String, dynamic> jsonData) async {
     final personnelFile = PersonnelFile.fromJson(jsonData);
@@ -40,6 +42,26 @@ class StorageService {
     await prefs.setString(_selectedRotaKey, rota);
   }
 
+  Future<bool> getHideDateFormat() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_hideDateFormatKey) ?? false;
+  }
+
+  Future<void> saveHideDateFormat(bool hide) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hideDateFormatKey, hide);
+  }
+
+  Future<bool> getHideSc() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_hideScKey) ?? false;
+  }
+
+  Future<void> saveHideSc(bool hide) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hideScKey, hide);
+  }
+
   Future<bool> hasPersonnelData() async {
     try {
       return await getPersonnelFile() != null;
@@ -53,5 +75,7 @@ class StorageService {
     await prefs.remove(_personnelKey);
     await prefs.remove(_selectedRotaKey);
     await prefs.remove(_legacyPersonnelListKey);
+    await prefs.remove(_hideDateFormatKey);
+    await prefs.remove(_hideScKey);
   }
 }

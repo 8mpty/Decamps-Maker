@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:tuas_decamps_maker/widgets/setting_checkbox.dart';
 
 class IncidentDetailsSection extends StatelessWidget {
   final DateTime selectedDate;
   final Function(BuildContext) onDateSelected;
   final TextEditingController incNumberController;
   final String? Function(String?) validator;
+  final bool hideIncDateFormat;
+  final ValueChanged<bool> onHideIncDateFormatChanged;
+  final bool hideSc;
+  final ValueChanged<bool> onHideScChanged;
 
   const IncidentDetailsSection({
     super.key,
@@ -13,6 +18,10 @@ class IncidentDetailsSection extends StatelessWidget {
     required this.onDateSelected,
     required this.incNumberController,
     required this.validator,
+    required this.hideIncDateFormat,
+    required this.onHideIncDateFormatChanged,
+    required this.hideSc,
+    required this.onHideScChanged,
   });
 
   @override
@@ -60,21 +69,32 @@ class IncidentDetailsSection extends StatelessWidget {
                       labelText: 'Incident Number',
                       border: const OutlineInputBorder(),
                       hintText: '',
-                      errorStyle: const TextStyle(
-                        fontSize: 12,
-                        height: 0.8,
-                      ),
+                      errorStyle: const TextStyle(fontSize: 12, height: 0.8),
                     ),
                     keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: validator,
                   ),
                 ],
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Extra Settings',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        SettingCheckbox(
+          label: 'Hide SC',
+          value: hideSc,
+          onChanged: onHideScChanged,
+        ),
+        SettingCheckbox(
+          label: 'Hide Full Date Format',
+          value: hideIncDateFormat,
+          onChanged: onHideIncDateFormatChanged,
         ),
         const SizedBox(height: 8),
       ],
