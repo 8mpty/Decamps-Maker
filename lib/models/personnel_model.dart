@@ -22,7 +22,7 @@ class PersonnelModel {
 }
 
 class PersonnelFile {
-  static const Set<String> _includedCategories = {'CFS', 'Firefighters', 'Alpha'};
+  static const Set<String> _includedCategories = {'CFS', 'Firefighters', 'Alpha', 'FIREFIGHTERS', 'ALPHA'};
   final int? rota;
   final String organization;
   final Map<String, dynamic> personnelData;
